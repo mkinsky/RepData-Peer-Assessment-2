@@ -1,0 +1,35 @@
+---
+title: "An Analysis of Storms and Severe Weather Events on the United States's Population Health and Economy (1950 - 2011)"
+output: html_document
+---
+
+###Abstract  
+
+###Data Processing    
+1.  Clear the screen and load the required libraries
+```{r}
+rm(list=ls())   #Clear all objects
+
+require(dplyr)
+require(stringr)
+require(ggplot2)
+require(knitr)
+```
+2.  Set the working directory and file vectors
+```{r}
+working.dir <- "C://Education//Reproducible Research//Homework//Peer Assessment 2"
+setwd(working.dir)
+
+input.dir <- ".\\input\\"
+output.dir <- ".\\output\\"
+script.dir <- ".\\scripts\\"
+input.storm.data <- "repdata-data-StormData.csv"
+input.storm.ref.data <- "storm-reference-data.csv"
+```
+3.  Load the storm data
+```{r}
+storm.data <- read.csv(paste(input.dir, input.storm.data, sep="\\"), stringsAsFactors = FALSE, strip.white = TRUE)
+storm.ref.data <- read.csv(paste(input.dir, input.storm.ref.data, sep="\\"), stringsAsFactors = FALSE, strip.white = TRUE)
+```
+
+###Results    
