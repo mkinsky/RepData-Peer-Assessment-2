@@ -27,9 +27,29 @@ input.storm.data <- "repdata-data-StormData.csv"
 input.storm.ref.data <- "storm-reference-data.csv"
 ```
 3.  Load the storm data
-```{r}
+```{r, cache = TRUE}
 storm.data <- read.csv(paste(input.dir, input.storm.data, sep="\\"), stringsAsFactors = FALSE, strip.white = TRUE)
 storm.ref.data <- read.csv(paste(input.dir, input.storm.ref.data, sep="\\"), stringsAsFactors = FALSE, strip.white = TRUE)
+```
+4.  Subeset storm.data where pop.health > 0 | PROPDMG > 0 | CROPDMG > 0
+```{r, cache = TRUE}
+storm.data.step.1 <- storm.data %.%
+  mutate(pop.health = FATALITIES + INJURIES, 
+         prop.dmg.exp = 0,
+         prop.dmg.value = 0,
+         crop.dmg.exp = 0,
+         crop.dmg.value = 0,
+         total.dmg.value = 0,
+         event.type.id = as.integer(0)) %.%
+  select(event.type.id, EVTYPE, FATALITIES, INJURIES, pop.health, PROPDMG, PROPDMGEXP, prop.dmg.exp, prop.dmg.value, CROPDMG, CROPDMGEXP, crop.dmg.exp, crop.dmg.value, total.dmg.value) %.%
+  filter(pop.health > 0 | PROPDMG > 0 | CROPDMG > 0)
+```
+
+5.  Clean-up the subsetted data
+```{r}
+storm.data.step.1$PROPDMGEXP = toupper(storm.data.step.1$PROPDMGEXP)
+storm.data.step.1$CROPDMGEXP = toupper(storm.data.step.1$CROPDMGEXP)
+storm.data.step.1$EVTYPE <- str_trim(storm.data.step.1$EVTYPE)
 ```
 
 ###Results    

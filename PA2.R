@@ -32,8 +32,6 @@ storm.data.step.1 <- storm.data %.%
          crop.dmg.value = 0,
          total.dmg.value = 0,
          event.type.id = as.integer(0)) %.%
-  #group_by(EVTYPE) %.%
-  #summarise(sum.fatal = sum(FATALITIES), sum.injuiry = sum(INJURIES), sum.pop.health = sum(pop.health)) %.%
   select(event.type.id, EVTYPE, FATALITIES, INJURIES, pop.health, PROPDMG, PROPDMGEXP, prop.dmg.exp, prop.dmg.value, CROPDMG, CROPDMGEXP, crop.dmg.exp, crop.dmg.value, total.dmg.value) %.%
   filter(pop.health > 0 | PROPDMG > 0 | CROPDMG > 0)
 
