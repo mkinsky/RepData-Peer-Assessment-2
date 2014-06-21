@@ -2,8 +2,6 @@ rm(list=ls())   #Clear all objects
 
 require(dplyr)
 require(stringr)
-require(ggplot2)
-require(knitr)
 
 #Set the working directory and file vectors
 working.dir <- "C://Education//Reproducible Research//Homework//Peer Assessment 2"
@@ -187,25 +185,40 @@ storm.data.step.3 <- storm.data.step.2 %.%
   summarise(sum.pop.health = sum(sum.pop.health), sum.prop.dmg.value = sum(sum.prop.dmg.value), sum.crop.dmg.value = sum(sum.crop.dmg.value), sum.total.dmg.value = sum(sum.total.dmg.value)) %.%
   select(event.type.group, event.name, sum.pop.health, sum.prop.dmg.value, sum.crop.dmg.value, sum.total.dmg.value)
 
-storm.data.step.4 <- storm.data.step.3 %.%  
-  group_by(event.type.group) %.%
-  summarise(sum.pop.health = sum(sum.pop.health), sum.prop.dmg.value = sum(sum.prop.dmg.value), sum.crop.dmg.value = sum(sum.crop.dmg.value), sum.total.dmg.value = sum(sum.total.dmg.value), event.count = n()) %.%
-  select(event.type.group, event.count, sum.pop.health, sum.prop.dmg.value, sum.crop.dmg.value, sum.total.dmg.value)
+#storm.data.step.4 <- storm.data.step.3 %.%  
+#  group_by(event.type.group) %.%
+#  summarise(sum.pop.health = sum(sum.pop.health), sum.prop.dmg.value = sum(sum.prop.dmg.value), sum.crop.dmg.value = sum(sum.crop.dmg.value), sum.total.dmg.value = sum(sum.total.dmg.value), event.count = n()) %.%
+#  select(event.type.group, event.count, sum.pop.health, sum.prop.dmg.value, sum.crop.dmg.value, sum.total.dmg.value)
 
 sum.pop.health <- sum(storm.data.step.3$sum.pop.health) 
 max.pop.health <- max(storm.data.step.3$sum.pop.health)
 diff.pop.health <- sum.pop.health - max.pop.health
 
-pop.health.bar.plot.data <- as.data.frame(rbind(subset(storm.data.step.3, sum.pop.health == max.pop.health, select = c(event.name, sum.pop.health)), 
-      c("All other event types combined", diff.pop.health)))
-pop.health.bar.plot.data$sum.pop.health <- as.numeric(pop.health.bar.plot.data$sum.pop.health)
-rownames(pop.health.bar.plot.data) <- NULL
-#barplot(pop.health.bar.plot.data)
-qplot(x = pop.health.bar.plot.data$event.name, y = pop.health.bar.plot.data$sum.pop.health, geom = c("bar"), xlab = "Event", ylab = "Population Health (Injuiries + Fatalities)", main = "Storm Events Most Harmful to the U.S. Population's Health (1950 - 2011)")
+max.pop.health.event <- as.character(subset(storm.data.step.3, sum.pop.health == max.pop.health, select = c(event.name)))
+other.pop.health.event <- "All other event types combined"
+names.argument <- as.vector(c(max.pop.health.event, other.pop.health.event))
+bar.plot.data <- as.data.frame(rbind(max.pop.health, diff.pop.health))
+rownames(bar.plot.data) <- NULL
+colnames(bar.plot.data) <- c("pop.health")
+bar.plot.data$pop.health <- as.numeric(bar.plot.data$pop.health)
+x.label <- "Weather Event"
+y.label <- "Population Health (# of Injuries and Fatalities)"
+y.limit <- c(0, 100000)
+main.title <- "Total Number of U.S. Weather Realted Injuries/Deaths (1950 - 2011)"
+barplot(bar.plot.data$pop.health, names.arg = names.argument, xlab = x.label, ylab = y.label, ylim = y.limit, main = main.title)
 
 max(storm.data.step.3$sum.pop.health)/diff.pop.health #more than 1.6x larger
 
+df <- storm.data.step.3[ order(-storm.data.step.3[,6]), c(2,6)]
+barplot(df[1:10, c(2)], names.arg = df[1:10, c(1)])
 
 storm.data.step.3 %.%
-  summarise (max.pop.health = max(sum.pop.health)) %.% 
-  select(event.type.group, event.name, sum.pop.health)
+  select(event.type.group, event.name, sum.pop.health, sum.total.dmg.value) %.%
+  arrange(desc(sum.pop.health))
+
+storm.data.step.4 <- storm.data.step.3[, c("event.name", "sum.pop.health", "sum.total.dmg.value")]
+colnames(storm.data.step.4) <- c("Event Name", "Number of Injuries and Fatalities", "Property and Crop Damage ($)")
+
+storm.data.step.4[ order(-storm.data.step.4[,3]), ]
+
+#write.csv(x = storm.data.step.4, file = paste(working.dir, output.dir, "stormDataV4.csv", sep = "//"), row.names = F)
