@@ -2,7 +2,7 @@ rm(list=ls())   #Clear all objects
 
 require(dplyr)
 require(stringr)
-
+ 
 #Set the working directory and file vectors
 working.dir <- "C://Education//Reproducible Research//Homework//Peer Assessment 2"
 setwd(working.dir)

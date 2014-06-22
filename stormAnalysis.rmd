@@ -3,17 +3,26 @@ title: "The Impact of Storms and Severe Weather Events on the Population and Eco
 output: html_document
 ---
 
-###Abstract  
+###Synopsis  
+This analysis details the impact of storms and severe weather events over a 61-year period (1950 to 2011) on the U.S. population, in terms of injuries and deaths, as well as the associated dollar damage to properties and crops. The analysis uses the U.S. National Oceanic and Atmospheric Administration's (NOAA) storm database for the raw data and then implements 16 data processing steps to convert the raw data into the plots and tables presented in the **Results** and **Data Sets** sections below.  As part of the data processing steps, a large cleanup exercise was undertaken to convert the NOAA event type field (i.e. EVTYPE) to one of the forty-eight (48) consistent NOAA storm types.  As with any classification exercise, liberties were taken to adhere to the 48 storm types; however, any rational reclassification, made by independent means, to assign event types to storm types would not change the results of this analysis in any material way.
+
+It is suprising to note Tornados accounted for more than 62% of the injuries/fatalities sustained during this time-period.  In fact, Tornados outpaced the combined other 47 storm types by a 1.7 magnitude.  Although Tornados caused a significant number of injuiries/fatalities, they ranked 3rd in terms of economic damage ($ damage to property and crops).  Moreover, the top four storm types (Floods, Hurricanes (Typhoons), Tornados, and Storm Surge/Tides) accounted for approximately 75% of the economic damage caused during the time period.
+
+For illustrative purposes, tabular results are presented in their entirely within the **Data Sets** section, while plots are streamlined in the **Results** section to show the event types which contribute most to the question being addressed.
+
+Lastly, this analysis defines population health as the summation of any injuries or deaths, while economic damage is the summation (in $) of the amount of destruction caused to both property and crops.
 
 ###Data Processing    
-1.  Clear the screen and load the required libraries
+This section describes the 16 steps used to process the NOAA storm data.  
+
+**1.  Clear the screen and load the required libraries**
 ```{r, Data Processing Step 1}
 rm(list=ls())   #Clear all objects
 
 require(dplyr)
 require(stringr)
 ```
-2.  Set the working directory and file vectors
+**2.  Set the working directory and file vectors**  
 ```{r, Data Processing Step 2}
 working.dir <- "C://Education//Reproducible Research//Homework//Peer Assessment 2"
 setwd(working.dir)
@@ -24,12 +33,12 @@ script.dir <- ".\\scripts\\"
 input.storm.data <- "repdata-data-StormData.csv"
 input.storm.ref.data <- "storm-reference-data.csv"
 ```
-3.  Load the storm data
+**3.  Load the storm data**  
 ```{r, cache = TRUE}
 storm.data <- read.csv(paste(input.dir, input.storm.data, sep="\\"), stringsAsFactors = FALSE, strip.white = TRUE)
 storm.ref.data <- read.csv(paste(input.dir, input.storm.ref.data, sep="\\"), stringsAsFactors = FALSE, strip.white = TRUE)
 ```
-4.  Subeset storm.data where pop.health > 0 | PROPDMG > 0 | CROPDMG > 0
+**4.  Subset storm.data where pop.health > 0 | PROPDMG > 0 | CROPDMG > 0**  
 ```{r, cache = TRUE}
 storm.data.step.1 <- storm.data %.%
   mutate(pop.health = FATALITIES + INJURIES, 
@@ -43,14 +52,14 @@ storm.data.step.1 <- storm.data %.%
   filter(pop.health > 0 | PROPDMG > 0 | CROPDMG > 0)
 ```
 
-5.  Clean-up the subsetted data
+**5.  Clean-up the subsetted storm data**  
 ```{r, Data Processing Step 5}
 storm.data.step.1$PROPDMGEXP = toupper(storm.data.step.1$PROPDMGEXP)
 storm.data.step.1$CROPDMGEXP = toupper(storm.data.step.1$CROPDMGEXP)
 storm.data.step.1$EVTYPE <- str_trim(storm.data.step.1$EVTYPE)
 ```
 
-6.  Set the PROPDMGEXP and CROPDMGexp variables
+**6.  Set the PROPDMGEXP and CROPDMGEXP variables**  
 ```{r, Data Processing Step 6}
 storm.data.step.1[storm.data.step.1$PROPDMGEXP == "1", c("prop.dmg.exp")] = 10
 storm.data.step.1[storm.data.step.1$PROPDMGEXP %in% c("H", "2"), c("prop.dmg.exp")] = 100
@@ -73,14 +82,14 @@ storm.data.step.1[storm.data.step.1$CROPDMGEXP == "8", c("crop.dmg.exp")] = 1000
 storm.data.step.1[storm.data.step.1$CROPDMGEXP %in% c("B", "9"), c("crop.dmg.exp")] = 1000000000
 ```
 
-7.  Set the Damage Value variables
+**7.  Set the Damage Value variables**  
 ```{r, Data Processing Step 7}
 storm.data.step.1$prop.dmg.value = as.numeric(storm.data.step.1$PROPDMG) * as.numeric(storm.data.step.1$prop.dmg.exp)
 storm.data.step.1$crop.dmg.value = as.numeric(storm.data.step.1$CROPDMG) * as.numeric(storm.data.step.1$crop.dmg.exp)
 storm.data.step.1$total.dmg.value = storm.data.step.1$prop.dmg.value + storm.data.step.1$crop.dmg.value
 ```
 
-8.  Summarize the Population Health and Damage Values by the Event Type
+**8.  Summarize the Population Health and Damage Values by the Event Type**  
 ```{r, Data Processing Step 8}
 storm.data.step.2 <- storm.data.step.1 %.%  
   group_by(EVTYPE) %.%
@@ -88,13 +97,13 @@ storm.data.step.2 <- storm.data.step.1 %.%
   select(event.type.id, EVTYPE, sum.pop.health, sum.prop.dmg.value, sum.crop.dmg.value, sum.total.dmg.value)
 ```
 
-9.  Cast ids to their representative data types
+**9.  Cast ids to their representative data types**  
 ```{r, Data Processing Step 9}
 storm.data.step.2$id = as.numeric(rownames(storm.data.step.2))
 storm.data.step.2$event.type.id = as.integer(storm.data.step.2$event.type.id)
 ```
 
-10.  Set Event Type IDs
+**10.  Assign the EVTYPE field to one of the 48 NOAA storm types**  
 ```{r, Data Processing Step 10}
 storm.data.step.2[grep("LIGHT", storm.data.step.2$EVTYPE, ignore.case=T), c("event.type.id")] <- 29
 storm.data.step.2[grep("LIGNTNING", storm.data.step.2$EVTYPE, ignore.case=T), c("event.type.id")] <- 29
@@ -197,18 +206,18 @@ storm.data.step.2[grep("TSTM", storm.data.step.2$EVTYPE, ignore.case=T), c("even
 storm.data.step.2[grep("VOLCANIC ASH", storm.data.step.2$EVTYPE, ignore.case=T), c("event.type.id")] <- 44
 ```
 
-11.  Cast event.type.ids
+**11.  Cast event.type.ids**  
 ```{r, Data Processing Step 11}
 storm.ref.data$event.type.id = as.integer(storm.ref.data$event.type.id)
 storm.data.step.2$event.type.id = as.integer(storm.data.step.2$event.type.id)
 ```
 
-12.  Merge the storm data with the associated storm data hierarchy
+**12.  Merge the storm data with the associated storm data hierarchy**  
 ```{r, Data Processing Step 12}
 storm.data.step.2 <- left_join(storm.data.step.2, storm.ref.data)
 ```
 
-13.  Summarize the merged storm data by the event group/event name
+**13.  Summarize the merged storm data by the event group/event name**  
 ```{r, Data Processing Step 13}
 storm.data.step.3 <- storm.data.step.2 %.%  
   group_by(event.type.group, event.name) %.%
@@ -216,11 +225,13 @@ storm.data.step.3 <- storm.data.step.2 %.%
   select(event.type.group, event.name, sum.pop.health, sum.prop.dmg.value, sum.crop.dmg.value, sum.total.dmg.value)
 ```
 
-14.  Prepare the Population Health's Bar Plot Data
+**14.  Prepare the Population Health's Vectors and Data.Frames**  
 ```{r, Data Processing Step 14}
 sum.pop.health <- sum(storm.data.step.3$sum.pop.health) 
 max.pop.health <- max(storm.data.step.3$sum.pop.health)
 diff.pop.health <- sum.pop.health - max.pop.health
+per.diff.pop.health <- round((max.pop.health/sum.pop.health) * 100, 1)
+pop.health.magnitude <- round(max.pop.health/diff.pop.health, 1)
 max.pop.health.event <- as.character(subset(storm.data.step.3, sum.pop.health == max.pop.health, select = c(event.name)))
 other.pop.health.event <- "All other event types combined"
 names.argument.pop.health <- as.vector(c(max.pop.health.event, other.pop.health.event))
@@ -230,33 +241,59 @@ colnames(bar.plot.data) <- c("pop.health")
 bar.plot.data$pop.health <- as.numeric(bar.plot.data$pop.health)
 ```
 
-15.  Create a human-friendly view of the storm data
+**15.  Prepare the Economic Consequence Vectors and Data.Frames**  
 ```{r, Data Processing Step 15}
-storm.data.step.4 <- storm.data.step.3[, c("event.name", "sum.pop.health", "sum.total.dmg.value")]
-colnames(storm.data.step.4) <- c("Event Name", "Number of Injuries and Fatalities", "Property and Crop Damage ($)")
+econ.plot.data <- storm.data.step.3[ order(-storm.data.step.3[,6]), c(2,6)]
+econ.top.4 <- sum(econ.plot.data[1:4, c(2)])
+econ.all <- sum(econ.plot.data[ c(2)])
+econ.pct <- round((econ.top.4/econ.all)*100, 1)
+```
+
+**16.  Create a human-friendly view of the storm data**  
+```{r, Data Processing Step 16}
+storm.data.step.4 <- subset(storm.data.step.3, is.na(event.name) == F, c("event.name", "sum.pop.health", "sum.total.dmg.value")) #With non-user friendly names
+#storm.data.step.5 <- storm.data.step.4 
+#colnames(storm.data.step.5) <- c("Event Name", "Number of Injuries and Fatalities", "Property and Crop Damage ($)") #With user friendly names
 ```
 
 ###Results    
-```{r, Results Step 1}
-storm.data.step.4[ order(-storm.data.step.4[,2]), c("Event Name", "Number of Injuries and Fatalities")]
+**1.  Across the United States, which types of events are most harmful with respect to population health?**  
+The NOAA storm data shows Tornados accounted for `r max.pop.health` out of the `r sum.pop.health` (`r per.diff.pop.health `%) injuries/deaths for the period.  In fact, Tornados caused approximately `r pop.health.magnitude` times more injuries/fatalities than the other 47 storm types combined.  This is highlighted by the plot below.  
 
-max(storm.data.step.3$sum.pop.health)/diff.pop.health #more than 1.6x larger
-```
+Please see the **Data Sets** section for a listing of injuries/deaths by storm type.
 
 ```{r, Results Step 2}
 x.label <- "Weather Event"
 y.label <- "Number of Injuries/Fatalities"
 y.limit <- c(0, 100000)
-main.title <- "Total Number of U.S. Weather Realted Injuries/Deaths (1950 - 2011)"
+main.title <- "Total Number of U.S. Weather Related Injuries/Deaths (1950 - 2011)"
 barplot(bar.plot.data$pop.health, names.arg = names.argument.pop.health, xlab = x.label, ylab = y.label, ylim = y.limit, main = main.title)
 ```
 
+**2.  Across the United States, which types of events have the greatest economic consequences?**  
+The NOAA storm data shows Floods, Hurricanes (Typhoons), Tornados, and Storm Surge/Tides accounted for $`r econ.top.4` out of the $`r econ.all` (`r econ.pct `%) property and/or crop damage for the period.  This is highlighted by the plot below.  
+
+Please see the **Data Sets** section for a listing of $ amount of property and/or crop damage by storm type.
 ```{r, Results Step 3}
-storm.data.step.4[ order(-storm.data.step.4[,3]), c("Event Name", "Property and Crop Damage ($)")]
-```
-
-```{r, Results Step 4}
+x.label <- "Weather Event"
+y.label <- "$ Damage (Property/Crop)"
+y.limit <- c(0, 200000000000)
+main.title <- "Total $ of U.S. Weather Related Property/Crop Damage (1950 - 2011)"
 df <- storm.data.step.3[ order(-storm.data.step.3[,6]), c(2,6)]
-barplot(df[1:3, c(2)], names.arg = df[1:3, c(1)])
+barplot(df[1:4, c(2)], names.arg = df[1:4, c(1)], xlab = x.label, ylab = y.label, ylim = y.limit, main = main.title)
 ```
 
+###Data Sets 
+**1.  Number of Injuries/Fatalities By Storm Type (1950 - 2011)**
+```{r, Data Sets 1}
+storm.data.step.6 <- subset(storm.data.step.4, sum.pop.health > 0, c(event.name, sum.pop.health))
+colnames(storm.data.step.6) <- c("Event Name", "Number of Injuries and Fatalities")
+storm.data.step.6[ order(-storm.data.step.6[,2]), c("Event Name", "Number of Injuries and Fatalities")]
+```
+
+**2.  $ Amount of Property and/or Crop Damage By Storm Type (1950 - 2011)**
+```{r, Data Sets 2}
+storm.data.step.6 <- subset(storm.data.step.4, sum.total.dmg.value > 0, c(event.name, sum.total.dmg.value))
+colnames(storm.data.step.6) <- c("Event Name",  "Property and Crop Damage ($)")
+storm.data.step.6[ order(-storm.data.step.6[,2]), c("Event Name",  "Property and Crop Damage ($)")]
+```
